@@ -93,7 +93,8 @@ public class BinanceApiWebSocketClientImpl implements BinanceApiWebSocketClient,
     }
 
     private Closeable createNewWebSocket(String channel, BinanceApiWebSocketListener<?> listener) {
-        String streamingUrl = String.format("%s/%s", BinanceApiConfig.useTestnetStreaming?BinanceApiConfig.getStreamTestNetBaseUrl():BinanceApiConfig.getStreamApiBaseUrl(), channel);
+        String baseUrl = getBaseUrl();
+        String streamingUrl = String.format("%s/%s", baseUrl, channel);
         Request request = new Request.Builder().url(streamingUrl).build();
         final WebSocket webSocket = client.newWebSocket(request, listener);
         return () -> {
@@ -102,5 +103,16 @@ public class BinanceApiWebSocketClientImpl implements BinanceApiWebSocketClient,
             webSocket.close(code, null);
             listener.onClosed(webSocket, code, null);
         };
+    }
+
+    private String getBaseUrl() {
+        String baseUrl = BinanceApiConfig.getStreamApiBaseUrl();
+
+        if (BinanceApiConfig.useTestnetStreaming)
+            baseUrl = BinanceApiConfig.getStreamTestNetBaseUrl();
+        else if (BinanceApiConfig.useFuture)
+            baseUrl = BinanceApiConfig.getFutureStreamApiBaseUrl();
+
+        return baseUrl;
     }
 }
